@@ -18,7 +18,7 @@
           placeholder="html显示处"
           v-model="htmlContent">
         </el-input>
-       <!-- <editor v-model="content" @init="editorInit" lang="html" theme="chrome" width="500" height="100"></editor>-->
+        <!-- <editor v-model="content" @init="editorInit" lang="html" theme="chrome" width="500" height="100"></editor>-->
       </div>
     </div>
 
@@ -154,7 +154,7 @@
     <!--最终保存-->
     <div>
       <el-row>
-        <el-button type="success" @click="httpPostDocument()">保 存</el-button>
+        <el-button type="success" @click="dialogSave()">保 存</el-button>
       </el-row>
     </div>
   </div>
@@ -185,13 +185,13 @@
 
         optionsStructureType: [
           {
-            value: 'String',
+            value: 'STRING',
             label: '字符串'
           }, {
             value: 'ARRAY',
             label: '数组'
           }],
-        valueStructureType: 'String',
+        valueStructureType: 'STRING',
 
         element: {
           cssQuery: '',
@@ -202,12 +202,6 @@
         },
         documentInfo: {
           protocol: 'http://',
-         /* id: '',
-
-          url: '',
-          name: '',
-          gmtCreate: '',
-          gmtModified: '',*/
           elements: []
         }
       }
@@ -252,7 +246,7 @@
       },
       httpGetDocument() {
         var id = this.$route.params.id;
-        if(id.isNaN){
+        if (id.isNaN) {
           return;
         }
         this.axios.get("/api/document/" + id).then((res) => {
@@ -271,6 +265,7 @@
         });
       },
       httpPostDocument() {
+
         this.axios.post("/api/document", this.documentInfo).then((res) => {
           this.$message(res.data.message);
         }).catch((err) => {
@@ -278,10 +273,28 @@
         });
       },
       httpPutDocument() {
-        this.axios.put("/document").then((res) => {
-          alert(res);
+        this.axios.put("/api/document",this.documentInfo).then((res) => {
+          this.$message(res.data.message);
         }).catch((err) => {
-          alert(err);
+          this.$message(err.data);
+        });
+      },
+      dialogSave() {
+        this.$prompt('起个名称', '提示', {
+          confirmButtonText: '确定',
+          cancelButtonText: '取消',
+          inputPattern: /[\u4e00-\u9fa5\w-_]+/,
+          inputErrorMessage: '存在空字符'
+        }).then(({value}) => {
+          this.documentInfo.name = value;
+          var id = this.$route.params.id;
+          if (isNaN(id)) {
+            this.httpPostDocument();
+          } else {
+            this.httpPutDocument();
+          }
+        }).catch((e) => {
+          this.$message('操作失败'+e);
         });
       }
     }

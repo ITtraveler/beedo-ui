@@ -1,12 +1,87 @@
 <template>
   <div>
     <div class="area">
-      <el-tree
-        :data="treeDocument"
-        show-checkbox
-        node-key="id"
-        :props="defaultProps">
-      </el-tree>
+      <template>
+        <el-table
+          :data="treeDocuments"
+          tooltip-effect="dark"
+          style="width: 100%"
+        >
+          <el-table-column type="expand">
+            <template slot-scope="props">
+              <el-form label-position="left" inline class="demo-table-expand">
+                <el-form-item>
+                  <el-table
+                    ref="multipleTable"
+                    :data="props.row.elements"
+                    tooltip-effect="dark"
+                    style="width: 100%"
+                    @select="rowSelect(scope.$index,scope.row)"
+                    >
+                    <el-table-column
+                      type="selection"
+                      width="55">
+                    </el-table-column>
+                    <el-table-column
+                      fixed
+                      type="index"
+                      label="序号"
+                      width="100">
+                    </el-table-column>
+                    <el-table-column
+                      label="cssQuery"
+                      prop="cssQuery"
+                      width="120">
+                    </el-table-column>
+                    <el-table-column
+                      label="数据类型"
+                      prop="dataType"
+                      width="100">
+                    </el-table-column>
+                    <el-table-column
+                      label="数据结构"
+                      prop="structureType"
+                      width="100">
+                    </el-table-column>
+                    <el-table-column
+                      label="属性"
+                      prop="attr"
+                      width="80">
+                    </el-table-column>
+                    <el-table-column
+                      label="备注"
+                      prop="memo"
+                      width="200"
+                      show-overflow-tooltip>
+                    </el-table-column>
+                    <el-table-column
+                      label="数据库字段"
+                      width="100"
+                      prop="field"
+                      show-overflow-tooltip>
+                    </el-table-column>
+                  </el-table>
+                </el-form-item>
+              </el-form>
+            </template>
+          </el-table-column>
+          <el-table-column
+            type="index"
+            label="提取列表"
+            width="100">
+          </el-table-column>
+          <el-table-column
+            prop="url">
+          </el-table-column>
+          <el-table-column
+            prop="name">
+          </el-table-column>
+        </el-table>
+        <div style="margin-top: 20px">
+          <el-button @click="clearSelection()">取消选择</el-button>
+          <el-button @click="moreDocuments()">更多</el-button>
+        </div>
+      </template>
     </div>
     <div class="area">
       <el-row>
@@ -69,51 +144,43 @@
     name: "",
     data() {
       return {
-        treeDocument: [{
-          id: 1,
-          label: '全选(任务节点选择)',
-          children: [{
-            id: 4,
-            label: 'http://www.baidu.com   百度',
-            children: [{
-              id: 9,
-              label: '表达式：（#add .b attr），  属性:（href），  数据类型：文本 ，   结构类型：字符串，   备注：测试专用'
-            }, {
-              id: 10,
-              label: '三级 1-1-2'
-            }]
-          }, {
-            id: 4,
-            label: 'http://www.lunshuge.com   论书阁',
-            children: [{
-              id: 9,
-              label: '三级 1-1-1'
-            }, {
-              id: 10,
-              label: '三级 1-1-2'
-            }]
-          }]
-        }],
+        page: {
+          size: 20,
+          num: 1,
+          totalSize: 0
+        },
+        treeDocuments: [],
+        multipleSelection: [],
         mongodb: ''
       }
     },
-    methods: {
-      querySearch(queryString, cb) {
-        var restaurants = this.restaurants;
-        var results = queryString ? restaurants.filter(this.createFilter(queryString)) : restaurants;
-        // 调用 callback 返回建议列表的数据
-        cb(results);
-      },
-      loadAll() {
-        return [
-          {"value": "三全鲜食（北新泾店）", "address": "长宁区新渔路144号"},
-          {"value": "Hot honey 首尔炸鸡（仙霞路）", "address": "上海市长宁区淞虹路661号"},
-          {"value": "新旺角茶餐厅", "address": "上海市普陀区真北路988号创邑金沙谷6号楼113"}
-        ]
-      }
+    mounted: function () {
+      this.loadingData();
     },
-    mounted() {
-      this.restaurants = this.loadAll();
+    methods: {
+      clearSelection(rows) {
+        this.$refs.multipleTable.clearSelection();
+      },
+      //首次进来加载数据
+      loadingData() {
+        this.axios.get("/api/document/page/" + this.page.num + "/size/" + this.page.size).then((res) => {
+          this.treeDocuments = res.data.dataList;
+        }).catch((err) => {
+          this.$message(err);
+        });
+      },
+      moreDocuments() {
+        this.page.num++;
+        this.axios.get("/api/document/page/" + this.page.num + "/size/" + this.page.size).then((res) => {
+          this.treeDocuments = this.treeDocuments.concat(res.data.dataList);
+        }).catch((err) => {
+          this.$message(err);
+        });
+      },
+      rowSelect(index,row){
+        console.log(index,row);
+        row.field='333';
+      }
     }
   }
 </script>
