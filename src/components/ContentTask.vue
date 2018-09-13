@@ -9,15 +9,18 @@
         >
           <el-table-column type="expand">
             <template slot-scope="props">
-              <el-form label-position="left" inline class="demo-table-expand">
+              <el-form label-position="left"
+                       inline
+                       class="demo-table-expand">
                 <el-form-item>
                   <el-table
                     ref="multipleTable"
                     :data="props.row.elements"
                     tooltip-effect="dark"
                     style="width: 100%"
-                    @select="rowSelect(scope.$index,scope.row)"
-                    >
+                    @select="documentSelect"
+                    @select-all="documentSelectAll"
+                  >
                     <el-table-column
                       type="selection"
                       width="55">
@@ -56,9 +59,12 @@
                     </el-table-column>
                     <el-table-column
                       label="数据库字段"
-                      width="100"
                       prop="field"
-                      show-overflow-tooltip>
+                      width="120">
+                      123
+                      <template slot-scope="scope">
+                        <el-input size="mini" v-model="scope.row.field" placeholder="请输入字段"></el-input>
+                      </template>
                     </el-table-column>
                   </el-table>
                 </el-form-item>
@@ -87,12 +93,12 @@
       <el-row>
         <el-col :span="4"><span class="hint">schedule:</span></el-col>
         <el-col :span="8">
-          <el-input placeholder="请输cron表达式 " v-model="cron">
+          <el-input placeholder="cron表达式 " v-model="taskInfo.cron">
           </el-input>
         </el-col>
         <el-col :span="4"><span class="hint">线程数:</span></el-col>
         <el-col :span="8">
-          <el-input placeholder="线程数量(最大500) " v-model="cron">
+          <el-input placeholder="线程数量(最大500) " v-model="taskInfo.threadCoolSize">
           </el-input>
         </el-col>
       </el-row>
@@ -102,14 +108,14 @@
       <el-row>
         <el-col :span="4"><span class="hint">任务名:</span></el-col>
         <el-col :span="8">
-          <el-input placeholder="请输入任务名 " v-model="cron">
+          <el-input placeholder="请输入任务名 " v-model="taskInfo.name">
           </el-input>
         </el-col>
         <el-col :span="4"><span class="hint">mongodb:</span></el-col>
         <el-col :span="8">
           <el-autocomplete
             class="inline-input"
-            v-model="mongodb"
+            v-model="taskInfo.dbname"
             :fetch-suggestions="querySearch"
             placeholder="请输入名"
             @select="handleSelect"
@@ -122,7 +128,7 @@
       <el-row>
         <el-col :span="4"><span class="hint">备注:</span></el-col>
         <el-col :span="20">
-          <el-input placeholder="请输入任务名 " v-model="memo">
+          <el-input placeholder="请输入任务名 " v-model="taskInfo.memo">
           </el-input>
         </el-col>
         </el-col>
@@ -132,7 +138,7 @@
     <!--最终保存-->
     <div>
       <el-row>
-        <el-button type="success">保 存</el-button>
+        <el-button type="success" @click="dialogSave">保 存</el-button>
       </el-row>
     </div>
 
@@ -151,7 +157,14 @@
         },
         treeDocuments: [],
         multipleSelection: [],
-        mongodb: ''
+        taskInfo: {
+          name: '',
+          cron: '',
+          threadCoolSize: '',
+          dbname: '',
+          memo: '',
+          parseNodes: []
+        }
       }
     },
     mounted: function () {
@@ -177,9 +190,54 @@
           this.$message(err);
         });
       },
-      rowSelect(index,row){
-        console.log(index,row);
-        row.field='333';
+      documentSelect(rows,row) {
+        console.log(row,rows);
+        var node = this.findNode(row.documentId);
+
+        //移除节点
+        if(rows.length === 0){
+          node.elementIds.delete(row.id);
+          return;
+        }
+
+        //添加节点
+        if (node == null) {
+          node = {};
+          node.documentId = row.documentId;
+          node.elementIds = new Map();
+          this.taskInfo.parseNodes.push(node);
+        }
+
+        node.elementIds.set(row.id, 'field');
+      },
+      findNode(documentId){
+        for (var i = 0; i < this.taskInfo.parseNodes.length; i++) {
+          if (this.taskInfo.parseNodes[i].documentId === documentId) {
+            return this.taskInfo.parseNodes[i];
+          }
+        }
+      },
+      documentSelectAll(rows) {
+        console.log(rows)
+      },
+      dialogSave() {
+        this.$confirm('确认保存任务吗?', '提示', {
+          confirmButtonText: '确定',
+          cancelButtonText: '取消',
+          type: 'warning'
+        }).then(() => {
+          console.log(this.taskInfo);
+          this.axios.post("/api/task", this.taskInfo).then((res) => {
+            this.$message(res.data.message);
+          }).catch((err) => {
+            this.$message(err.data);
+          });
+        }).catch(() => {
+          this.$message({
+            type: 'info',
+            message: '已取消保持'
+          });
+        });
       }
     }
   }
