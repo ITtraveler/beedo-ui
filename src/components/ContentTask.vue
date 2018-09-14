@@ -169,6 +169,7 @@
     },
     mounted: function () {
       this.loadingData();
+      this.httpGetTask();
     },
     methods: {
       clearSelection(rows) {
@@ -190,12 +191,12 @@
           this.$message(err);
         });
       },
-      documentSelect(rows,row) {
-        console.log(row,rows);
+      documentSelect(rows, row) {
+        console.log(row, rows);
         var node = this.findNode(row.documentId);
 
         //移除节点
-        if(rows.length === 0){
+        if (rows.length === 0) {
           node.elementIds.delete(row.id);
           return;
         }
@@ -204,21 +205,39 @@
         if (node == null) {
           node = {};
           node.documentId = row.documentId;
-          node.elementIds = new Map();
+          node.elementIds = {};
           this.taskInfo.parseNodes.push(node);
         }
-
-        node.elementIds.set(row.id, 'field');
+        node.elementIds[row.id] = 'field';
       },
-      findNode(documentId){
+      findNode(documentId) {
         for (var i = 0; i < this.taskInfo.parseNodes.length; i++) {
           if (this.taskInfo.parseNodes[i].documentId === documentId) {
             return this.taskInfo.parseNodes[i];
           }
         }
       },
-      documentSelectAll(rows) {
-        console.log(rows)
+      documentSelectAll(rows, row) {
+        console.log(rows, row);
+        for (var i = 0; i < rows.length; i++) {
+          // documentSelect(rows, rows[i])
+        }
+      },
+      //保存
+      httpPostTask() {
+        this.axios.post("/api/task", this.taskInfo).then((res) => {
+          this.$message(res.data.message);
+        }).catch((err) => {
+          this.$message(err.data);
+        });
+      },
+      //更新
+      httpPutTask() {
+        this.axios.put("/api/task/"+this.taskInfo.uid, this.taskInfo).then((res) => {
+          this.$message(res.data.message);
+        }).catch((err) => {
+          this.$message(err.data);
+        });
       },
       dialogSave() {
         this.$confirm('确认保存任务吗?', '提示', {
@@ -227,16 +246,37 @@
           type: 'warning'
         }).then(() => {
           console.log(this.taskInfo);
-          this.axios.post("/api/task", this.taskInfo).then((res) => {
-            this.$message(res.data.message);
-          }).catch((err) => {
-            this.$message(err.data);
-          });
+          var uid = this.$route.params.id;
+          if (uid == null) {
+            this.httpPostTask();
+          } else {
+            this.httpPutTask();
+          }
         }).catch(() => {
           this.$message({
             type: 'info',
             message: '已取消保持'
           });
+        });
+      },
+      httpGetTask() {
+        var uid = this.$route.params.id;
+        if (uid === null) {
+          return;
+        }
+        this.axios.get("/api/task/" + uid).then((res) => {
+          if (res.data.status === 200) {
+            this.taskInfo = res.data.data;
+            this.$message(res.data.message);
+          } else {
+            this.$message({
+              message: '获取数据失败',
+              type: 'warning'
+            });
+          }
+
+        }).catch((err) => {
+          this.$message(err);
         });
       }
     }

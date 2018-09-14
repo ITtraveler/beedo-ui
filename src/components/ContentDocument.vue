@@ -265,7 +265,6 @@
         });
       },
       httpPostDocument() {
-
         this.axios.post("/api/document", this.documentInfo).then((res) => {
           this.$message(res.data.message);
         }).catch((err) => {
