@@ -58,6 +58,11 @@
                 size="small">
                 移除
               </el-button>
+              <el-switch
+                v-model="scope.row.taskStatus"
+                @change="taskStatusChange(scope.row)"
+              >
+              </el-switch>
             </template>
           </el-table-column>
         </el-table>
@@ -86,6 +91,7 @@
     name: "",
     data() {
       return {
+        taskStatus: true,
         page: {
           size: 20,
           num: 1,
@@ -101,10 +107,31 @@
       deleteRow(index, rows) {
         rows.splice(index, 1);
       },
+      //更新状态
+      taskStatusChange(row) {
+        console.log(row)
+        var status = "CLOSE";
+        if (row.taskStatus) {
+          status = "VALID";
+        }
+        this.axios.put("/api/task/" + row.uid + "/status/" + status).then((res) => {
+          this.$message(res.data.message);
+        }).catch((err) => {
+          this.$message(err.data);
+        });
+      },
       //首次进来加载数据
       loadingData() {
         this.axios.get("/api/task/page/" + this.page.num + "/size/" + this.page.size).then((res) => {
           this.taskListData = res.data.dataList;
+          for (var i = 0; i < this.taskListData.length; i++) {
+            var task = this.taskListData[i];
+            if (task.taskStatus === 'INIT' || task.taskStatus === 'CLOSE') {
+              task.taskStatus = false;
+            } else if (task.taskStatus === 'VALID') {
+              task.taskStatus = true;
+            }
+          }
           this.page.totalSize = res.data.totalSize;
         }).catch((err) => {
           this.$message(err);

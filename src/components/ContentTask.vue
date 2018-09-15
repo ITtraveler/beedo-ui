@@ -61,7 +61,6 @@
                       label="数据库字段"
                       prop="field"
                       width="120">
-                      123
                       <template slot-scope="scope">
                         <el-input size="mini" v-model="scope.row.field" placeholder="请输入字段"></el-input>
                       </template>
@@ -261,7 +260,7 @@
       },
       httpGetTask() {
         var uid = this.$route.params.id;
-        if (uid === null) {
+        if (uid == null) {
           return;
         }
         this.axios.get("/api/task/" + uid).then((res) => {
