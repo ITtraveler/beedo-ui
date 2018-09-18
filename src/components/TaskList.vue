@@ -32,11 +32,6 @@
             width="120">
           </el-table-column>
           <el-table-column
-            prop="taskStatus"
-            label="任务状态"
-            width="120">
-          </el-table-column>
-          <el-table-column
             prop="gmtCreate"
             label="创建时间"
             width="120">

@@ -76,7 +76,7 @@
             </el-input>
           </el-col>
           <el-col :span="4">
-            <el-button type="primary" icon="el-icon-view" circle title="测试"></el-button>
+            <el-button type="primary" icon="el-icon-view" circle title="测试" @click="cssQueryTest"></el-button>
             <el-button type="success" icon="el-icon-check" circle title="添加" @click="addElement()"></el-button>
           </el-col>
         </el-row>
@@ -90,7 +90,7 @@
             type="textarea"
             :rows="2"
             placeholder="筛选结果"
-            v-model="textarea">
+            v-model="testArea">
           </el-input>
         </el-col>
       </div>
@@ -170,6 +170,7 @@
         disable: false,
         protocol: 'http://',
         htmlContent: '',
+        testArea: '',
         optionsDataType: [
           {
             value: 'TEXT',
@@ -244,6 +245,26 @@
         var newElement = this.$comjs.cloneObj(this.element);
         this.documentInfo.elements.push(newElement);
       },
+      cssQueryTest() {
+        if (this.element.cssQuery == '') {
+          return;
+        }
+
+        var url = this.documentInfo.protocol + this.documentInfo.url;
+        this.axios.get("/api/document/parse/query?parseUrl=" + url + "&cssQuery=" + this.element.cssQuery)
+          .then((res) => {
+            if (res.data.status === 200) {
+              this.testArea = res.data.data;
+            } else {
+              this.$message({
+                message: '测试失败',
+                type: 'warning'
+              });
+            }
+          }).catch((err) => {
+          this.$message(err);
+        });
+      },
       httpGetDocument() {
         var id = this.$route.params.id;
         if (id.isNaN) {
@@ -272,7 +293,7 @@
         });
       },
       httpPutDocument() {
-        this.axios.put("/api/document",this.documentInfo).then((res) => {
+        this.axios.put("/api/document", this.documentInfo).then((res) => {
           this.$message(res.data.message);
         }).catch((err) => {
           this.$message(err.data);
@@ -293,7 +314,7 @@
             this.httpPutDocument();
           }
         }).catch((e) => {
-          this.$message('操作失败'+e);
+          this.$message('操作失败' + e);
         });
       }
     }

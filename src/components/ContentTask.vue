@@ -62,7 +62,8 @@
                       prop="field"
                       width="120">
                       <template slot-scope="scope">
-                        <el-input size="mini" v-model="scope.row.field" placeholder="请输入字段"></el-input>
+                        <el-input :id="'fieldInput_'+scope.row.id" size="mini" v-model="scope.row.field"
+                                  placeholder="请输入字段"></el-input>
                       </template>
                     </el-table-column>
                   </el-table>
@@ -95,9 +96,9 @@
           <el-input placeholder="cron表达式 " v-model="taskInfo.cron">
           </el-input>
         </el-col>
-        <el-col :span="4"><span class="hint">线程数:</span></el-col>
+        <el-col :span="4"><span class="hint">线程池大小:</span></el-col>
         <el-col :span="8">
-          <el-input placeholder="线程数量(最大500) " v-model="taskInfo.threadCoolSize">
+          <el-input placeholder="线程池大小(最大500) " v-model="taskInfo.threadCoolSize">
           </el-input>
         </el-col>
       </el-row>
@@ -107,14 +108,14 @@
       <el-row>
         <el-col :span="4"><span class="hint">任务名:</span></el-col>
         <el-col :span="8">
-          <el-input placeholder="请输入任务名 " v-model="taskInfo.name">
+          <el-input placeholder="请输入表名 " v-model="taskInfo.name">
           </el-input>
         </el-col>
         <el-col :span="4"><span class="hint">mongodb:</span></el-col>
         <el-col :span="8">
           <el-autocomplete
             class="inline-input"
-            v-model="taskInfo.dbname"
+            v-model="taskInfo.collectionName"
             :fetch-suggestions="querySearch"
             placeholder="请输入名"
             @select="handleSelect"
@@ -160,7 +161,7 @@
           name: '',
           cron: '',
           threadCoolSize: '',
-          dbname: '',
+          collectionName: '',
           memo: '',
           parseNodes: []
         }
@@ -195,7 +196,8 @@
         var node = this.findNode(row.documentId);
 
         //移除节点
-        if (rows.length === 0) {
+        if (rows.length === 0 || !this.rowInRows(rows, row)) {
+          $("#fieldInput_" + row.id).attr("disabled", false);
           node.elementIds.delete(row.id);
           return;
         }
@@ -207,7 +209,9 @@
           node.elementIds = {};
           this.taskInfo.parseNodes.push(node);
         }
-        node.elementIds[row.id] = 'field';
+        node.elementIds[row.id] = row.field == null ? this.$comjs.uuid() : row.field;
+
+        $("#fieldInput_" + row.id).attr("disabled", true);
       },
       findNode(documentId) {
         for (var i = 0; i < this.taskInfo.parseNodes.length; i++) {
@@ -216,10 +220,19 @@
           }
         }
       },
-      documentSelectAll(rows, row) {
-        console.log(rows, row);
+      rowInRows(rows, row) {
         for (var i = 0; i < rows.length; i++) {
-          // documentSelect(rows, rows[i])
+          if (rows[i].id === row.id) {
+            return true
+          }
+        }
+        return false;
+      },
+      documentSelectAll(rows) {
+        console.log(rows);
+        for (var i = 0; i < rows.length; i++) {
+          var row = rows[i];
+          //todo 寻找解决办法中
         }
       },
       //保存
@@ -232,13 +245,14 @@
       },
       //更新
       httpPutTask() {
-        this.axios.put("/api/task/"+this.taskInfo.uid, this.taskInfo).then((res) => {
+        this.axios.put("/api/task/" + this.taskInfo.uid, this.taskInfo).then((res) => {
           this.$message(res.data.message);
         }).catch((err) => {
           this.$message(err.data);
         });
       },
       dialogSave() {
+        console.log(this.taskInfo);
         this.$confirm('确认保存任务吗?', '提示', {
           confirmButtonText: '确定',
           cancelButtonText: '取消',
@@ -263,6 +277,7 @@
         if (uid == null) {
           return;
         }
+
         this.axios.get("/api/task/" + uid).then((res) => {
           if (res.data.status === 200) {
             this.taskInfo = res.data.data;
