@@ -66,6 +66,17 @@
                                   placeholder="请输入字段"></el-input>
                       </template>
                     </el-table-column>
+                    <el-table-column
+                      class="subUid"
+                      label="子任务Uid"
+                      prop="subUid"
+                      width="120">
+                      <template slot-scope="scope">
+                        <el-input :id="'fieldInput_sub_'+scope.row.id" v-if="scope.row.dataType === 'URL'"
+                                  size="mini" v-model="scope.row.subTaskUid"
+                                  placeholder="请输入uid"></el-input>
+                      </template>
+                    </el-table-column>
                   </el-table>
                 </el-form-item>
               </el-form>
@@ -89,18 +100,42 @@
         </div>
       </template>
     </div>
+
     <div class="area">
       <el-row>
-        <el-col :span="4"><span class="hint">schedule:</span></el-col>
+        <el-col :span="4"><span class="hint">级别:</span></el-col>
         <el-col :span="8">
-          <el-input placeholder="cron表达式 " v-model="taskInfo.cron">
-          </el-input>
+          <template>
+            <el-select v-model="taskInfo.level" placeholder="请选择"
+                       :change="dataLevelChange()">
+              <el-option
+                v-for="item in levels"
+                :key="item.valueDateType"
+                :label="item.label"
+                :value="item.value">
+              </el-option>
+            </el-select>
+          </template>
         </el-col>
-        <el-col :span="4"><span class="hint">线程池大小:</span></el-col>
-        <el-col :span="8">
-          <el-input placeholder="线程池大小(最大500) " v-model="taskInfo.threadCoolSize">
-          </el-input>
-        </el-col>
+      </el-row>
+    </div>
+
+    <div class="area">
+      <el-row>
+        <div id="cron" v-if="taskInfo.level === 0">
+          <el-col :span="4"><span class="hint">schedule:</span></el-col>
+          <el-col :span="8">
+            <el-input placeholder="cron表达式" v-model="taskInfo.cron">
+            </el-input>
+          </el-col>
+        </div>
+        <div id="threadCoolSize" v-if="taskInfo.level === 0">
+          <el-col :span="4"><span class="hint">线程池大小:</span></el-col>
+          <el-col :span="8">
+            <el-input placeholder="线程池大小(最大500) " v-model="taskInfo.threadCoolSize">
+            </el-input>
+          </el-col>
+        </div>
       </el-row>
     </div>
 
@@ -111,16 +146,18 @@
           <el-input placeholder="请输入表名 " v-model="taskInfo.name">
           </el-input>
         </el-col>
-        <el-col :span="4"><span class="hint">mongodb:</span></el-col>
-        <el-col :span="8">
-          <el-autocomplete
-            class="inline-input"
-            v-model="taskInfo.collectionName"
-            :fetch-suggestions="querySearch"
-            placeholder="请输入名"
-            @select="handleSelect"
-          ></el-autocomplete>
-        </el-col>
+        <div id="collectionName" v-if="taskInfo.level === 0">
+          <el-col :span="4"><span class="hint">集合名:</span></el-col>
+          <el-col :span="8">
+            <el-autocomplete
+              class="inline-input"
+              v-model="taskInfo.collectionName"
+              :fetch-suggestions="querySearch"
+              placeholder="请输入集合名"
+              @select="handleSelect"
+            ></el-autocomplete>
+          </el-col>
+        </div>
       </el-row>
     </div>
 
@@ -128,7 +165,7 @@
       <el-row>
         <el-col :span="4"><span class="hint">备注:</span></el-col>
         <el-col :span="20">
-          <el-input placeholder="请输入任务名 " v-model="taskInfo.memo">
+          <el-input placeholder="请输入备注 " v-model="taskInfo.memo">
           </el-input>
         </el-col>
         </el-col>
@@ -155,9 +192,19 @@
           num: 1,
           totalSize: 0
         },
+        levels: [
+          {
+            value: 0,
+            label: '父类'
+          }, {
+            value: 1,
+            label: '子类'
+          }],
         treeDocuments: [],
         multipleSelection: [],
+        selectedElementId: [],
         taskInfo: {
+          level: 0,
           name: '',
           cron: '',
           threadCoolSize: '',
@@ -193,25 +240,40 @@
       },
       documentSelect(rows, row) {
         console.log(row, rows);
-        var node = this.findNode(row.documentId);
+        if (rows.length === 0 || !this.rowInRows(rows, row)) {
+          for (var i = 0; i < this.selectedElementId.length; i++) {
+            if (this.selectedElementId[i] === row.id) {
+              this.selectedElementId.splice(i, 1);
+              break;
+            }
+          }
+        } else {
+          this.selectedElementId.push(row.id);
+        }
+        console.log(this.selectedElementId);
 
         //移除节点
-        if (rows.length === 0 || !this.rowInRows(rows, row)) {
-          $("#fieldInput_" + row.id).attr("disabled", false);
-          node.elementIds.delete(row.id);
-          return;
-        }
+        /*     if (rows.length === 0 || !this.rowInRows(rows, row)) {
+               $("#fieldInput_" + row.id).attr("disabled", false);
+               $("#fieldInput_sub_" + row.id).attr("disabled", false);
+               node.elementInfoMap.delete(row.id);
+               return;
+             }*/
 
         //添加节点
-        if (node == null) {
-          node = {};
-          node.documentId = row.documentId;
-          node.elementIds = {};
-          this.taskInfo.parseNodes.push(node);
-        }
-        node.elementIds[row.id] = row.field == null ? this.$comjs.uuid() : row.field;
+        /*       if (node == null) {
+                 node = {};
+                 node.documentId = row.documentId;
+                 node.elementInfoMap = {};
+                 this.taskInfo.parseNodes.push(node);
+               }
+               taskElementInfo.field = row.field == null ? this.$comjs.uuid() : row.field;
+               taskElementInfo.subTaskUid = row.subTaskUid;
+               taskElementInfo.expand = row.expend;
+               node.elementInfoMap[row.id] = taskElementInfo;
 
-        $("#fieldInput_" + row.id).attr("disabled", true);
+               $("#fieldInput_" + row.id).attr("disabled", true);
+               $("#fieldInput_sub_" + row.id).attr("disabled", true);*/
       },
       findNode(documentId) {
         for (var i = 0; i < this.taskInfo.parseNodes.length; i++) {
@@ -228,20 +290,55 @@
         }
         return false;
       },
-      documentSelectAll(rows) {
-        console.log(rows);
+      documentSelectAll(rows, id) {
+        console.log(rows, id);
         for (var i = 0; i < rows.length; i++) {
           var row = rows[i];
           //todo 寻找解决办法中
         }
       },
+      //级别选择变化
+      dataLevelChange() {
+        //子
+
+      },
       //保存
       httpPostTask() {
-        this.axios.post("/api/task", this.taskInfo).then((res) => {
-          this.$message(res.data.message);
-        }).catch((err) => {
-          this.$message(err.data);
-        });
+        //console.log(this.treeDocuments);
+        console.log(this.taskInfo);
+        //console.log(this.selectedElementId);
+        for (var i = 0; i < this.selectedElementId.length; i++) {
+          var elementId = this.selectedElementId[i];
+          for (var j = 0; j < this.treeDocuments.length; j++) {
+            var document = this.treeDocuments[j];
+            for (var k = 0; k < document.elements.length; k++) {
+              var element = document.elements[k];
+              if (elementId == element.id) {
+                console.log(elementId);
+                var node = this.findNode(document.id);
+                if (node == null) {
+                  node = {};
+                  node.documentId = document.id;
+                  node.elementInfoMap = {};
+                  this.taskInfo.parseNodes.push(node);
+                }
+                var taskElementInfo = {};
+                taskElementInfo.elementId = elementId;
+                taskElementInfo.field = element.field == null ? this.$comjs.uuid() : element.field;
+                taskElementInfo.subTaskUid = element.subTaskUid;
+                taskElementInfo.expand = element.expend;
+                node.elementInfoMap[elementId] = taskElementInfo;
+              }
+            }
+          }
+        }
+        console.log(this.taskInfo);
+         this.axios.post("/api/task", this.taskInfo).then((res) => {
+           this.$message(res.data.message);
+           this.taskInfo.parseNodes = "";
+         }).catch((err) => {
+           this.$message(err.data);
+         });
       },
       //更新
       httpPutTask() {
@@ -252,6 +349,12 @@
         });
       },
       dialogSave() {
+        if (this.taskInfo.level > 0) {
+          this.taskInfo.cron = '';
+          this.taskInfo.collectionName = '';
+          this.taskInfo.threadCoolSize = '';
+        }
+
         console.log(this.taskInfo);
         this.$confirm('确认保存任务吗?', '提示', {
           confirmButtonText: '确定',

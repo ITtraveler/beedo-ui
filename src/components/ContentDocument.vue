@@ -181,6 +181,9 @@
           }, {
             value: 'ATTR',
             label: '属性'
+          }, {
+            value: 'URL',
+            label: '链接'
           }],
         valueDateType: 'TEXT',
 
@@ -224,7 +227,7 @@
       },
       //是否显示属性输入框
       dataTypeChange() {
-        if (this.element.dataType == 'ATTR') {
+        if (this.element.dataType == 'ATTR' || this.element.dataType == 'URL') {
           $('#element-attr').show();
         } else {
           $('#element-attr').hide();
@@ -301,6 +304,7 @@
       },
       dialogSave() {
         this.$prompt('起个名称', '提示', {
+          inputValue: this.documentInfo.name,
           confirmButtonText: '确定',
           cancelButtonText: '取消',
           inputPattern: /[\u4e00-\u9fa5\w-_]+/,

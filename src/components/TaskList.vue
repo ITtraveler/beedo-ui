@@ -54,6 +54,7 @@
                 移除
               </el-button>
               <el-switch
+                v-if="scope.row.level == 0"
                 v-model="scope.row.taskStatus"
                 @change="taskStatusChange(scope.row)"
               >
