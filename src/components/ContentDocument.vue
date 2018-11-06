@@ -254,7 +254,8 @@
         }
 
         var url = this.documentInfo.protocol + this.documentInfo.url;
-        this.axios.get("/api/document/parse/query?parseUrl=" + url + "&cssQuery=" + this.element.cssQuery)
+        this.axios.get("/api/document/parse/query?parseUrl=" + encodeURIComponent(url) + "&cssQuery=" +
+          encodeURIComponent(this.element.cssQuery))
           .then((res) => {
             if (res.data.status === 200) {
               this.testArea = res.data.data;

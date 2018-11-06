@@ -1,13 +1,10 @@
 <template>
   <div>
     <div class="area">
-      <template>
-        <el-table
-          :data="treeDocuments"
-          tooltip-effect="dark"
-          style="width: 100%"
-        >
-          <el-table-column type="expand">
+      <div style="text-align: left;padding: 12px;">提取列表</div>
+      <el-collapse>
+        <div v-for="item in treeDocuments">
+          <el-collapse-item :title="item.name" :name="item.id">
             <template slot-scope="props">
               <el-form label-position="left"
                        inline
@@ -15,7 +12,7 @@
                 <el-form-item>
                   <el-table
                     ref="multipleTable"
-                    :data="props.row.elements"
+                    :data="item.elements"
                     tooltip-effect="dark"
                     style="width: 100%"
                     @select="documentSelect"
@@ -58,47 +55,54 @@
                       show-overflow-tooltip>
                     </el-table-column>
                     <el-table-column
-                      label="数据库字段"
-                      prop="field"
+                      label="操作"
                       width="120">
                       <template slot-scope="scope">
-                        <el-input :id="'fieldInput_'+scope.row.id" size="mini" v-model="scope.row.field"
-                                  placeholder="请输入字段"></el-input>
-                      </template>
-                    </el-table-column>
-                    <el-table-column
-                      class="subUid"
-                      label="子任务Uid"
-                      prop="subUid"
-                      width="120">
-                      <template slot-scope="scope">
-                        <el-input :id="'fieldInput_sub_'+scope.row.id" v-if="scope.row.dataType === 'URL'"
-                                  size="mini" v-model="scope.row.subTaskUid"
-                                  placeholder="请输入uid"></el-input>
+                        <el-popover
+                          placement="top"
+                          width="300"
+                          hight="300"
+                          trigger="click">
+                          <div>
+                            <el-input :id="'fieldInput_'+scope.row.id" size="mini" v-model="scope.row.field"
+                                      placeholder="数据库字段"></el-input>
+
+                            <el-input :id="'fieldInput_sub_'+scope.row.id" v-if="scope.row.dataType === 'URL'"
+                                      size="mini" v-model="scope.row.subTaskUid"
+                                      placeholder="子任务uid"></el-input>
+                            <el-input :id="'fieldInput_def_'+scope.row.id"
+                                      size="mini" v-model="scope.row.defValue"
+                                      placeholder="默认值"></el-input>
+                          </div>
+
+                          <el-button slot="reference">设置</el-button>
+                        </el-popover>
                       </template>
                     </el-table-column>
                   </el-table>
                 </el-form-item>
               </el-form>
             </template>
-          </el-table-column>
-          <el-table-column
-            type="index"
-            label="提取列表"
-            width="100">
-          </el-table-column>
-          <el-table-column
-            prop="url">
-          </el-table-column>
-          <el-table-column
-            prop="name">
-          </el-table-column>
-        </el-table>
-        <div style="margin-top: 20px">
-          <el-button @click="clearSelection()">取消选择</el-button>
-          <el-button @click="moreDocuments()">更多</el-button>
+          </el-collapse-item>
+        </div>
+      </el-collapse>
+    </div>
+
+    <div class="area">
+      <template>
+        <div class="block">
+          <el-pagination
+            @size-change="handleSizeChange"
+            @current-change="handleCurrentChange"
+            :current-page="page.num"
+            :page-sizes="[20, 40, 80, 160]"
+            :page-size="page.size"
+            layout="total, sizes, prev, pager, next, jumper"
+            :total="page.totalSize">
+          </el-pagination>
         </div>
       </template>
+
     </div>
 
     <div class="area">
@@ -106,8 +110,7 @@
         <el-col :span="4"><span class="hint">级别:</span></el-col>
         <el-col :span="8">
           <template>
-            <el-select v-model="taskInfo.level" placeholder="请选择"
-                       :change="dataLevelChange()">
+            <el-select v-model="taskInfo.level" placeholder="请选择">
               <el-option
                 v-for="item in levels"
                 :key="item.valueDateType"
@@ -201,7 +204,6 @@
             label: '子类'
           }],
         treeDocuments: [],
-        multipleSelection: [],
         selectedElementId: [],
         taskInfo: {
           level: 0,
@@ -219,96 +221,142 @@
       this.httpGetTask();
     },
     methods: {
+      /** 组件操作 **/
       clearSelection(rows) {
         this.$refs.multipleTable.clearSelection();
       },
+
+      documentSelect(rows, row) {
+        //rows.lenght == 0 为取消选择操作，反之
+        console.log("select event:", row, rows);
+        console.log(rows.__ob__.dep.id);
+        if (rows.length === 0 || !this.rowInRows(rows, row)) {
+          for (var i = 0; i < this.selectedElementId.length; i++) {
+            if (this.selectedElementId[i].elementId === row.id) {
+              //从中移除
+              this.selectedElementId.splice(i, 1);
+              break;
+            }
+          }
+        } else {
+          var select = {};
+          select.elementId = row.id;
+          //当前组件id
+          select.depId = rows.__ob__.dep.id;
+          //添加
+          this.selectedElementId.push(select);
+        }
+
+        console.log("selectedElementId:", this.selectedElementId)
+      },
+
+      documentSelectAll(rows) {
+        console.log("select all event:", rows);
+        var depId = rows.__ob__.dep.id;
+        //删除
+        if (rows.length === 0) {
+          var newSelectedElementId = [];
+          for (var i = 0; i < this.selectedElementId.length; i++) {
+            if (depId != this.selectedElementId[i].depId) {
+              newSelectedElementId.push(this.selectedElementId[i]);
+            }
+          }
+          this.selectedElementId = newSelectedElementId;
+        } else { //全选
+          for (var i = 0; i < rows.length; i++) {
+            var curElementId = rows[i].id;
+            var inSelected = false;
+            for (var j = 0; j < this.selectedElementId.length; j++) {
+              if (curElementId == this.selectedElementId[j].elementId) {
+                inSelected = true;
+                break;
+              }
+            }
+            if (!inSelected) {
+              var select = {};
+              select.elementId = curElementId;
+              //当前组件id
+              select.depId = depId;
+              this.selectedElementId.push(select);
+            }
+          }
+        }
+        console.log("selectedElementId:", this.selectedElementId)
+      },
+
+      /** http **/
       //首次进来加载数据
       loadingData() {
         this.axios.get("/api/document/page/" + this.page.num + "/size/" + this.page.size).then((res) => {
           this.treeDocuments = res.data.dataList;
+          this.page.totalSize = res.data.totalSize;
+          //todo 设置已选项
         }).catch((err) => {
           this.$message(err);
         });
       },
       moreDocuments() {
-        this.page.num++;
+        //this.page.num++;
         this.axios.get("/api/document/page/" + this.page.num + "/size/" + this.page.size).then((res) => {
           this.treeDocuments = this.treeDocuments.concat(res.data.dataList);
         }).catch((err) => {
           this.$message(err);
         });
       },
-      documentSelect(rows, row) {
-        console.log(row, rows);
-        if (rows.length === 0 || !this.rowInRows(rows, row)) {
-          for (var i = 0; i < this.selectedElementId.length; i++) {
-            if (this.selectedElementId[i] === row.id) {
-              this.selectedElementId.splice(i, 1);
-              break;
-            }
-          }
-        } else {
-          this.selectedElementId.push(row.id);
-        }
-        console.log(this.selectedElementId);
-
-        //移除节点
-        /*     if (rows.length === 0 || !this.rowInRows(rows, row)) {
-               $("#fieldInput_" + row.id).attr("disabled", false);
-               $("#fieldInput_sub_" + row.id).attr("disabled", false);
-               node.elementInfoMap.delete(row.id);
-               return;
-             }*/
-
-        //添加节点
-        /*       if (node == null) {
-                 node = {};
-                 node.documentId = row.documentId;
-                 node.elementInfoMap = {};
-                 this.taskInfo.parseNodes.push(node);
-               }
-               taskElementInfo.field = row.field == null ? this.$comjs.uuid() : row.field;
-               taskElementInfo.subTaskUid = row.subTaskUid;
-               taskElementInfo.expand = row.expend;
-               node.elementInfoMap[row.id] = taskElementInfo;
-
-               $("#fieldInput_" + row.id).attr("disabled", true);
-               $("#fieldInput_sub_" + row.id).attr("disabled", true);*/
-      },
-      findNode(documentId) {
-        for (var i = 0; i < this.taskInfo.parseNodes.length; i++) {
-          if (this.taskInfo.parseNodes[i].documentId === documentId) {
-            return this.taskInfo.parseNodes[i];
-          }
-        }
-      },
-      rowInRows(rows, row) {
-        for (var i = 0; i < rows.length; i++) {
-          if (rows[i].id === row.id) {
-            return true
-          }
-        }
-        return false;
-      },
-      documentSelectAll(rows, id) {
-        console.log(rows, id);
-        for (var i = 0; i < rows.length; i++) {
-          var row = rows[i];
-          //todo 寻找解决办法中
-        }
-      },
-      //级别选择变化
-      dataLevelChange() {
-        //子
-
-      },
       //保存
       httpPostTask() {
+        this.handlePerDealData();
+        this.axios.post("/api/task", this.taskInfo).then((res) => {
+          this.$message(res.data.message);
+          this.taskInfo.parseNodes = "";
+        }).catch((err) => {
+          this.$message(err.data);
+        });
+      },
+      //更新
+      httpPutTask() {
+        this.handlePerDealData();
+        this.axios.put("/api/task/" + this.taskInfo.uid, this.taskInfo).then((res) => {
+          this.$message(res.data.message);
+        }).catch((err) => {
+          this.$message(err.data);
+        });
+      },
+
+      httpGetTask() {
+        var uid = this.$route.params.id;
+        if (uid == null) {
+          return;
+        }
+
+        this.axios.get("/api/task/" + uid).then((res) => {
+          if (res.data.status === 200) {
+            this.taskInfo = res.data.data;
+            console.log(this.taskInfo);
+            this.$message(res.data.message);
+          } else {
+            this.$message({
+              message: '获取数据失败',
+              type: 'warning'
+            });
+          }
+
+        }).catch((err) => {
+          this.$message(err);
+        });
+      },
+
+      /** other **/
+      //提交数据前置处理
+      handlePerDealData() {
+        //先清空原始配的节点
+        this.taskInfo.parseNodes = [];
         //console.log(this.treeDocuments);
         console.log(this.taskInfo);
-        //console.log(this.selectedElementId);
+
+        //重新配置节点
         for (var i = 0; i < this.selectedElementId.length; i++) {
-          var elementId = this.selectedElementId[i];
+          var elementId = this.selectedElementId[i].elementId;
           for (var j = 0; j < this.treeDocuments.length; j++) {
             var document = this.treeDocuments[j];
             for (var k = 0; k < document.elements.length; k++) {
@@ -327,26 +375,13 @@
                 taskElementInfo.field = element.field == null ? this.$comjs.uuid() : element.field;
                 taskElementInfo.subTaskUid = element.subTaskUid;
                 taskElementInfo.expand = element.expend;
+                taskElementInfo.defValue = element.defValue;
                 node.elementInfoMap[elementId] = taskElementInfo;
               }
             }
           }
         }
         console.log(this.taskInfo);
-         this.axios.post("/api/task", this.taskInfo).then((res) => {
-           this.$message(res.data.message);
-           this.taskInfo.parseNodes = "";
-         }).catch((err) => {
-           this.$message(err.data);
-         });
-      },
-      //更新
-      httpPutTask() {
-        this.axios.put("/api/task/" + this.taskInfo.uid, this.taskInfo).then((res) => {
-          this.$message(res.data.message);
-        }).catch((err) => {
-          this.$message(err.data);
-        });
       },
       dialogSave() {
         if (this.taskInfo.level > 0) {
@@ -375,26 +410,32 @@
           });
         });
       },
-      httpGetTask() {
-        var uid = this.$route.params.id;
-        if (uid == null) {
-          return;
-        }
-
-        this.axios.get("/api/task/" + uid).then((res) => {
-          if (res.data.status === 200) {
-            this.taskInfo = res.data.data;
-            this.$message(res.data.message);
-          } else {
-            this.$message({
-              message: '获取数据失败',
-              type: 'warning'
-            });
+      findNode(documentId) {
+        for (var i = 0; i < this.taskInfo.parseNodes.length; i++) {
+          if (this.taskInfo.parseNodes[i].documentId === documentId) {
+            return this.taskInfo.parseNodes[i];
           }
+        }
+      },
+      rowInRows(rows, row) {
+        for (var i = 0; i < rows.length; i++) {
+          if (rows[i].id === row.id) {
+            return true
+          }
+        }
+        return false;
+      },
+      handleSizeChange(size) {
+        console.log(`每页 ${size} 条`);
+        this.page.size = size;
+        this.loadingData();
+      },
+      handleCurrentChange(num) {
+        console.log(`当前页: ${num}`);
+        this.page.num = num;
+        this.loadingData();
+        //todo 已经被选项打勾
 
-        }).catch((err) => {
-          this.$message(err);
-        });
       }
     }
   }

@@ -162,6 +162,16 @@
         }).catch(() => {
           this.$message('已取消删除');
         });
+      },
+      handleSizeChange(size) {
+        console.log(`每页 ${size} 条`);
+        this.page.size = size;
+        this.loadingData();
+      },
+      handleCurrentChange(num) {
+        console.log(`当前页: ${num}`);
+        this.page.num = num;
+        this.loadingData();
       }
     }
   }
