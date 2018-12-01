@@ -217,7 +217,7 @@
       //获取html
       getHtmlData() {
         var url = this.documentInfo.protocol + this.documentInfo.url;
-        this.axios.get("/api/document/parse/url?parseUrl=" + url).then((res) => {
+        this.axios.get("/beedo/document/parse/url?parseUrl=" + url).then((res) => {
           this.$message(res.data.message);
           this.htmlContent = res.data.data;
         }).catch((err) => {
@@ -254,7 +254,7 @@
         }
 
         var url = this.documentInfo.protocol + this.documentInfo.url;
-        this.axios.get("/api/document/parse/query?parseUrl=" + encodeURIComponent(url) + "&cssQuery=" +
+        this.axios.get("/beedo/document/parse/query?parseUrl=" + encodeURIComponent(url) + "&cssQuery=" +
           encodeURIComponent(this.element.cssQuery))
           .then((res) => {
             if (res.data.status === 200) {
@@ -274,7 +274,7 @@
         if (id.isNaN) {
           return;
         }
-        this.axios.get("/api/document/" + id).then((res) => {
+        this.axios.get("/beedo/document/" + id).then((res) => {
           if (res.data.status === 200) {
             this.documentInfo = res.data.data;
             this.$message(res.data.message);
@@ -290,14 +290,14 @@
         });
       },
       httpPostDocument() {
-        this.axios.post("/api/document", this.documentInfo).then((res) => {
+        this.axios.post("/beedo/document", this.documentInfo).then((res) => {
           this.$message(res.data.message);
         }).catch((err) => {
           this.$message(err.data);
         });
       },
       httpPutDocument() {
-        this.axios.put("/api/document", this.documentInfo).then((res) => {
+        this.axios.put("/beedo/document", this.documentInfo).then((res) => {
           this.$message(res.data.message);
         }).catch((err) => {
           this.$message(err.data);

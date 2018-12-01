@@ -11,12 +11,12 @@ module.exports = {
     assetsSubDirectory: 'static',
     assetsPublicPath: '/',
     proxyTable: {
-      '/api': {
+      '/beedo': {
         target: 'http://127.0.0.1:8020', //这里面是你要访问的IP地址
         changeOrigin: true,     ////改变源,开启代理
         secure: false,
         pathRewrite: {
-          '^/api': 'http://127.0.0.1:8020/beedo' //路径重写
+          '^/beedo': 'http://127.0.0.1:8020/beedo' //路径重写
         }
       }
     },

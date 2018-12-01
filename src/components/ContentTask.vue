@@ -287,7 +287,7 @@
       /** http **/
       //首次进来加载数据
       loadingData() {
-        this.axios.get("/api/document/page/" + this.page.num + "/size/" + this.page.size).then((res) => {
+        this.axios.get("/beedo/document/page/" + this.page.num + "/size/" + this.page.size).then((res) => {
           this.treeDocuments = res.data.dataList;
           this.page.totalSize = res.data.totalSize;
           //todo 设置已选项
@@ -297,7 +297,7 @@
       },
       moreDocuments() {
         //this.page.num++;
-        this.axios.get("/api/document/page/" + this.page.num + "/size/" + this.page.size).then((res) => {
+        this.axios.get("/beedo/document/page/" + this.page.num + "/size/" + this.page.size).then((res) => {
           this.treeDocuments = this.treeDocuments.concat(res.data.dataList);
         }).catch((err) => {
           this.$message(err);
@@ -306,7 +306,7 @@
       //保存
       httpPostTask() {
         this.handlePerDealData();
-        this.axios.post("/api/task", this.taskInfo).then((res) => {
+        this.axios.post("/beedo/task", this.taskInfo).then((res) => {
           this.$message(res.data.message);
           this.taskInfo.parseNodes = "";
         }).catch((err) => {
@@ -316,7 +316,7 @@
       //更新
       httpPutTask() {
         this.handlePerDealData();
-        this.axios.put("/api/task/" + this.taskInfo.uid, this.taskInfo).then((res) => {
+        this.axios.put("/beedo/task/" + this.taskInfo.uid, this.taskInfo).then((res) => {
           this.$message(res.data.message);
         }).catch((err) => {
           this.$message(err.data);
@@ -329,7 +329,7 @@
           return;
         }
 
-        this.axios.get("/api/task/" + uid).then((res) => {
+        this.axios.get("/beedo/task/" + uid).then((res) => {
           if (res.data.status === 200) {
             this.taskInfo = res.data.data;
             console.log(this.taskInfo);

@@ -110,7 +110,7 @@
         if (row.taskStatus) {
           status = "VALID";
         }
-        this.axios.put("/api/task/" + row.uid + "/status/" + status).then((res) => {
+        this.axios.put("/beedo/task/" + row.uid + "/status/" + status).then((res) => {
           this.$message(res.data.message);
         }).catch((err) => {
           this.$message(err.data);
@@ -118,7 +118,7 @@
       },
       //首次进来加载数据
       loadingData() {
-        this.axios.get("/api/task/page/" + this.page.num + "/size/" + this.page.size).then((res) => {
+        this.axios.get("/beedo/task/page/" + this.page.num + "/size/" + this.page.size).then((res) => {
           this.taskListData = res.data.dataList;
           for (var i = 0; i < this.taskListData.length; i++) {
             var task = this.taskListData[i];
@@ -139,7 +139,7 @@
           cancelButtonText: '取消',
           type: 'warning'
         }).then(() => {
-          this.axios.delete("/api/task/" + rows[index].uid).then((res) => {
+          this.axios.delete("/beedo/task/" + rows[index].uid).then((res) => {
             if (res.data.status == 200) {
               this.$message({
                 type: 'success',

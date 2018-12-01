@@ -87,7 +87,7 @@
     methods: {
       //首次进来加载数据
       loadingData() {
-        this.axios.get("/api/document/page/" + this.page.num + "/size/" + this.page.size).then((res) => {
+        this.axios.get("/beedo/document/page/" + this.page.num + "/size/" + this.page.size).then((res) => {
           this.tableDocumentData = res.data.dataList;
           this.page.totalSize = res.data.totalSize;
         }).catch((err) => {
@@ -100,7 +100,7 @@
           cancelButtonText: '取消',
           type: 'warning'
         }).then(() => {
-          this.axios.delete("/api/document/" + rows[index].id).then((res) => {
+          this.axios.delete("/beedo/document/" + rows[index].id).then((res) => {
             if(res.data.status == 200){
               this.$message({
                 type: 'success',
