@@ -64,15 +64,37 @@
                           hight="300"
                           trigger="click">
                           <div>
-                            <el-input :id="'fieldInput_'+scope.row.id" size="mini" v-model="scope.row.field"
-                                      placeholder="数据库字段"></el-input>
+                            <div>
+                              <el-input :id="'fieldInput_field_'+scope.row.id" size="mini" v-model="scope.row.field"
+                                        placeholder="数据库字段"></el-input>
 
-                            <el-input :id="'fieldInput_sub_'+scope.row.id" v-if="scope.row.dataType === 'URL'"
-                                      size="mini" v-model="scope.row.subTaskUid"
-                                      placeholder="子任务uid"></el-input>
-                            <el-input :id="'fieldInput_def_'+scope.row.id"
-                                      size="mini" v-model="scope.row.defValue"
-                                      placeholder="默认值"></el-input>
+                              <el-input :id="'fieldInput_sub_'+scope.row.id" v-if="scope.row.dataType === 'URL'"
+                                        style="margin-top: 10px"
+                                        size="mini" v-model="scope.row.subTaskUid"
+                                        placeholder="子任务uid"></el-input>
+                              <el-input :id="'fieldInput_def_'+scope.row.id"
+                                        style="margin-top: 10px"
+                                        size="mini" v-model="scope.row.defValue"
+                                        placeholder="默认值"></el-input>
+                            </div>
+                            <div style="margin-top: 10px">
+                              <el-switch
+                                :id="'fieldInput_exp_'+scope.row.id"
+                                v-if="scope.row.structureType === 'ARRAY'"
+                                v-model="scope.row.expand"
+                                inactive-text="数据展开:">
+                              </el-switch>
+                              <el-switch
+                                :id="'fieldInput_index_'+scope.row.id"
+                                v-model="scope.row.isIndex"
+                                inactive-text="唯一性:">
+                              </el-switch>
+                              <el-switch
+                                :id="'fieldInput_blank_'+scope.row.id"
+                                v-model="scope.row.isNotBlank"
+                                inactive-text="去空:">
+                              </el-switch>
+                            </div>
                           </div>
 
                           <el-button slot="reference">设置</el-button>
@@ -170,7 +192,6 @@
         <el-col :span="20">
           <el-input placeholder="请输入备注 " v-model="taskInfo.memo">
           </el-input>
-        </el-col>
         </el-col>
       </el-row>
     </div>
@@ -376,6 +397,8 @@
                 taskElementInfo.subTaskUid = element.subTaskUid;
                 taskElementInfo.expand = element.expend;
                 taskElementInfo.defValue = element.defValue;
+                taskElementInfo.isIndex = element.isIndex;
+                taskElementInfo.isNotBlank = element.isNotBlank;
                 node.elementInfoMap[elementId] = taskElementInfo;
               }
             }

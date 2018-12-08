@@ -17,7 +17,7 @@
             <!-- 路由匹配到的组件将渲染在这里 -->
             <router-view></router-view>
           </el-main>
-          <el-footer>Footer</el-footer>
+          <el-footer>我是不是创造者，我只是一个搬运工</el-footer>
         </el-container>
       </el-container>
     </el-container>
