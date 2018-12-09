@@ -36,7 +36,8 @@
           <el-menu-item-group>
             <template slot="title">爬虫任务</template>
             <el-menu-item index="2-1" @click="$goRoute('/task')">配置任务</el-menu-item>
-            <el-menu-item index="2-2" @click="$goRoute('/taskList')">任务列表</el-menu-item>
+            <el-menu-item index="2-2" @click="$goRoute('/urlTask')">URL任务</el-menu-item>
+            <el-menu-item index="2-3" @click="$goRoute('/taskList')">任务列表</el-menu-item>
           </el-menu-item-group>
         </el-submenu>
         <el-menu-item index="3">

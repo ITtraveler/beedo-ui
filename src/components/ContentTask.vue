@@ -216,6 +216,7 @@
           num: 1,
           totalSize: 0
         },
+        collections: [],
         levels: [
           {
             value: 0,
@@ -228,6 +229,7 @@
         selectedElementId: [],
         taskInfo: {
           level: 0,
+          type: 'ELEMENT',
           name: '',
           cron: '',
           threadCoolSize: '',
@@ -240,6 +242,7 @@
     mounted: function () {
       this.loadingData();
       this.httpGetTask();
+      this.loadAllCollections();
     },
     methods: {
       /** 组件操作 **/
@@ -429,7 +432,7 @@
         }).catch(() => {
           this.$message({
             type: 'info',
-            message: '已取消保持'
+            message: '已取消保存'
           });
         });
       },
@@ -459,6 +462,36 @@
         this.loadingData();
         //todo 已经被选项打勾
 
+      },
+
+      //获取获取集合名
+      loadAllCollections() {
+        this.axios.get("/beedo/task/collections").then((res) => {
+          if (res.data.status === 200) {
+            var collectionNames = res.data.data;
+            for (var i = 0; i < collectionNames.length; i++) {
+              this.collections[i] = {value: collectionNames[i]};
+            }
+          } else {
+            this.$message({
+              message: '获取数据失败',
+              type: 'warning'
+            });
+          }
+
+        }).catch((err) => {
+          this.$message(err);
+        });
+      },
+      querySearch(queryString, cb) {
+        var restaurants = this.collections;
+        var results = queryString ? restaurants.filter(this.createStateFilter(queryString)) : restaurants;
+        cb(results);
+      },
+      createStateFilter(queryString) {
+        return (state) => {
+          return (state.value.toLowerCase().indexOf(queryString.toLowerCase()) === 0);
+        };
       }
     }
   }

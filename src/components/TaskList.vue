@@ -28,13 +28,23 @@
           </el-table-column>
           <el-table-column
             prop="threadCoolSize"
-            label="线程池大小"
+            label="线程池"
+            width="100">
+          </el-table-column>
+          <el-table-column
+            prop="level"
+            label="level"
+            width="80">
+          </el-table-column>
+          <el-table-column
+            prop="type"
+            label="type"
             width="120">
           </el-table-column>
           <el-table-column
             prop="gmtCreate"
             label="创建时间"
-            width="120">
+            width="100">
           </el-table-column>
           <el-table-column
             fixed="right"
@@ -42,7 +52,15 @@
             width="220">
             <template slot-scope="scope">
               <el-button
+                v-if="scope.row.type==='ELEMENT'"
                 @click.native.prevent="$goRoute('/task/'+scope.row.uid)"
+                type="text"
+                size="small">
+                修改
+              </el-button>
+              <el-button
+                v-if="scope.row.type==='URL_EXPRESSION'"
+                @click.native.prevent="$goRoute('/urlTask/'+scope.row.uid)"
                 type="text"
                 size="small">
                 修改
