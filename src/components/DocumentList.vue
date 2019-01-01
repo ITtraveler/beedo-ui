@@ -101,7 +101,7 @@
           type: 'warning'
         }).then(() => {
           this.axios.delete("/beedo/document/" + rows[index].id).then((res) => {
-            if(res.data.status == 200){
+            if(res.data.status === 200){
               this.$message({
                 type: 'success',
                 message: '删除成功!'
@@ -140,5 +140,4 @@
 </script>
 
 <style scoped>
-
 </style>

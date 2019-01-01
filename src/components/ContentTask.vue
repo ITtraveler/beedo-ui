@@ -398,7 +398,7 @@
                 taskElementInfo.elementId = elementId;
                 taskElementInfo.field = element.field == null ? this.$comjs.uuid() : element.field;
                 taskElementInfo.subTaskUid = element.subTaskUid;
-                taskElementInfo.expand = element.expend;
+                taskElementInfo.expand = element.expand;
                 taskElementInfo.defValue = element.defValue;
                 taskElementInfo.isIndex = element.isIndex;
                 taskElementInfo.isNotBlank = element.isNotBlank;
